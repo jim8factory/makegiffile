@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>透過GIFメーカー</title>
+  <script src="https://cloudflare.com"></script>
+</head>
+<body>
+  <h3>複数画像から透過GIFを作成</h3>
+  <input type="file" id="uploader" multiple accept="image/png">
+  <button id="createBtn">GIFを生成</button>
+  <br><br>
+  <img id="result" alt="生成されたGIFがここに表示されます">
+
+  <script>
+    document.getElementById('createBtn').addEventListener('click', async () => {
+      const files = document.getElementById('uploader').files;
+      if (files.length === 0) return alert('画像を選択してください');
+
+      // gif.jsの初期化（transparentに透過させたいカラーコードを指定）
+      const gif = new GIF({
+        workers: 2,
+        quality: 10,
+        transparent: 0x000000, // 黒（または完全透明部分）を透過扱いする
+        workerScript: 'https://cloudflare.com'
+      });
+
+      for (const file of files) {
+        const img = await loadImage(file);
+        gif.addFrame(img, { delay: 200 });
+      }
+
+      gif.on('finished', (blob) => {
+        document.getElementById('result').src = URL.createObjectURL(blob);
+      });
+
+      gif.render();
+    });
+
+    function loadImage(file) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.src = URL.createObjectURL(file);
+      });
+    }
+  </script>
+</body>
+</html>
